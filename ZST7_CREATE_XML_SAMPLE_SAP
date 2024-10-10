@@ -1,0 +1,105 @@
+*&---------------------------------------------------------------------*
+*& Report ZST7_CREATE_XML_SAMPLE_SAP
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZST7_CREATE_XML_SAMPLE_SAP.
+
+PARAMETERS:
+
+  " Appserver Windows file. Not from Desktop (presentation server)
+  P_FNAME TYPE STRING DEFAULT 'C:\Users\Owner\Documents\file.XML'.
+
+
+
+DATA: LO_IXML TYPE REF TO IF_IXML.
+
+* Create iXML object
+LO_IXML = CL_IXML=>CREATE( ).
+
+
+**********************************************************************
+***  Build iXML DOM  *************************************************
+**********************************************************************
+* Sample XML contents.
+*  <?xml version="1.0"?>
+*  <Company>
+*   <CompanyName>SAP</CompanyName>
+*   <Employee Type="FT">
+*    <EmployeeName>James</EmployeeName>
+*    <EmployeeNumber>007</EmployeeNumber>
+*   </Employee>
+*  </Company>
+
+
+DATA: LO_DOCUMENT TYPE REF TO IF_IXML_DOCUMENT.
+DATA: LO_COMPANY  TYPE REF TO IF_IXML_ELEMENT.
+DATA: LO_EMPLOYEE TYPE REF TO IF_IXML_ELEMENT.
+
+LO_DOCUMENT = LO_IXML->CREATE_DOCUMENT( ).
+
+LO_COMPANY = LO_DOCUMENT->CREATE_SIMPLE_ELEMENT(
+  NAME   = 'Company'
+  PARENT = LO_DOCUMENT ).
+
+LO_DOCUMENT->CREATE_SIMPLE_ELEMENT( NAME   = 'CompanyName'
+                                    PARENT = LO_COMPANY
+                                    VALUE  = 'SAP' ).
+
+LO_EMPLOYEE = LO_DOCUMENT->CREATE_SIMPLE_ELEMENT(
+  NAME   = 'Employee'
+  PARENT = LO_COMPANY ).
+
+LO_EMPLOYEE->SET_ATTRIBUTE( NAME  = 'Type'
+                            VALUE = 'FT' ).
+
+LO_DOCUMENT->CREATE_SIMPLE_ELEMENT( NAME   = 'EmployeeName'
+                                    PARENT = LO_EMPLOYEE
+                                    VALUE  = 'James' ).
+
+LO_DOCUMENT->CREATE_SIMPLE_ELEMENT( NAME   = 'EmployeeNumber'
+                                    PARENT = LO_EMPLOYEE
+                                    VALUE  = '007' ).
+
+
+**********************************************************************
+*** Create Output Stream and Render **********************************
+**********************************************************************
+
+DATA:
+  LO_STREAMFACTORY TYPE REF TO IF_IXML_STREAM_FACTORY,
+  LO_OSTREAM       TYPE REF TO IF_IXML_OSTREAM,
+  LO_RENDERER      TYPE REF TO IF_IXML_RENDERER,
+  LV_RC            TYPE I,
+  LV_XML_SIZE      TYPE I,
+  LR_OSTREAM       TYPE REF TO IF_IXML_OSTREAM,
+  XML_STRING       TYPE STRING.
+
+* Create Stream Factory
+LO_STREAMFACTORY = LO_IXML->CREATE_STREAM_FACTORY( ).
+
+LR_OSTREAM = LO_STREAMFACTORY->CREATE_OSTREAM_CSTRING( XML_STRING ).
+*
+
+* Craete renderer
+LO_RENDERER = LO_IXML->CREATE_RENDERER( OSTREAM  = LR_OSTREAM
+                                        DOCUMENT = LO_DOCUMENT ).
+* Set Pretty Print
+LR_OSTREAM->SET_PRETTY_PRINT( 'X' ).
+
+* Render
+LV_RC = LO_RENDERER->RENDER( ).
+
+* Get XML file size
+LV_XML_SIZE = Lr_OSTREAM->GET_NUM_WRITTEN_RAW( ).
+
+
+
+CL_ABAP_BROWSER=>SHOW_XML(
+  EXPORTING
+    XML_STRING = XML_STRING
+    TITLE      = 'Test XML'
+    SIZE       = CL_ABAP_BROWSER=>MEDIUM ).
+
+* Display Output
+WRITE : 'XML File: ', P_FNAME, LV_XML_SIZE,  'Bytes'.
