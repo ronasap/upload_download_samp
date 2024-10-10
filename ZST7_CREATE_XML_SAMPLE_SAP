@@ -7,7 +7,7 @@ REPORT ZST7_CREATE_XML_SAMPLE_SAP.
 
 PARAMETERS:
 
-  " Appserver Windows file. Not from Desktop (presentation server)
+ 
   P_FNAME TYPE LOCALFILE DEFAULT 'C:\Users\Owner\Documents\file.XML'.
 
 
